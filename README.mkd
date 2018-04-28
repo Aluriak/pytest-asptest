@@ -1,0 +1,79 @@
+# ASP test
+[pytest](https://docs.pytest.org) plugin to test ASP source code.
+
+The principle is simple: you write inputs and outputs in a dedicated file, you run pytest,
+pytest tells you which outputs are missing or unexpected.
+
+
+## Installation
+
+    pip install pytest-asptest
+
+Obviously, in order to run ASP, a solver must be installed. The only one handled for now is [clingo](https://github.com/potassco/clingo/releases)
+from [potassco labs](https://potassco.org).
+
+
+## simple example
+Let's consider `dumbasp.lp`, an ASP code we want to be tested:
+
+```asp
+p(1..3).
+q(X): p(X).
+```
+
+We want to test the rule in second line. We therefore put it into a block (consecutive lines without blank lines)
+and give it a tag, `rule-q`:
+
+```asp
+p(1..3).
+
+% TEST: rule-q
+q(X): p(X).
+```
+
+Now we fill `test-rule-q.lp` with multiple tests:
+
+```asp
+% INPUT
+% empty test: no input, no output
+% INSATISFIABLE
+
+% INPUT
+p(1).
+% OUTPUT
+q(1).
+% OUTPUT
+q(2).  % This will lead to an error : there is no such answer set.
+```
+
+Now, we can run again asptest:
+
+    pytest dumbasp.lp
+
+It will report the testing process, indicating which tests are passed, and which are not.
+
+More examples are available in the [Makefile](Makefile), or in [examples/](examples/)
+
+
+
+
+## features
+- multiple files support ; tags are shared
+- handle generation of multiple answer sets, and strict keyword
+
+### strict output
+By default, the atoms given in output parts must be a *subset* of the atoms present in the answer set.
+However, if you want to explicitely give *all* atoms that must appear in a given answer set,
+you can write `% STRICT OUTPUT` instead of `% OUTPUT` in the test file.
+
+### file uid
+The file uid is given by default to all blocks of a file, and is the basename of the file.
+You can therefore implement `test-queens.lp` to test all the blocks found in file `queens.lp`,
+without having to manually tag all your blocks with it.
+
+### CLI options
+asptest add one option to pytest: `--uid-tests-dir`, allowing user to give to asptest the directory in which the `test-*.lp` files are.
+For instance, `pytest . -vv --uid-tests-dir asp-test` would allow you to test all ASP files in the current directory, using the test files in `asp-test/` dir.
+
+## TODO
+- auto include input code into output with flag *with-output* on OUTPUT lines in test files

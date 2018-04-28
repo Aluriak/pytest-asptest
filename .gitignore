@@ -1,0 +1,9 @@
+.cache/
+.pytest_cache/
+Session.vim
+__pycache__/
+build/
+debug/
+dist/
+pytest_asptest.egg-info/
+venv/
